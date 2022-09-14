@@ -1,5 +1,5 @@
 # Self-balance-car-system
-Control of stability of the y axis using a set of 4 motors to label a bed in 1 dimension; control of stability of the z and x axis with two motors that control the wheels.
+Control of stability of the y axis using a set of 4 motors to stabilize a bed (which is situated above the chasis of the car) in 1 dimension; control of stability of the z and x axis with two motors that control the wheels of a car system.
 
 For this project i´ve worked step by step, you can find the following files in this repository:
 
