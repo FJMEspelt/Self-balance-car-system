@@ -7,4 +7,4 @@ For this project i´ve worked step by step, you can find the following files in 
 -FullCode_V1_2_AnalogVersion_WheelControl (controls only the stability with the wheels as actuators).  
 -FullCode_V2 (both controls working together).  
 -sensor (checks how the sensor works and prints the values on the serial monitor).  
--l298 (checks if the module and the motors work).
+-prueba_l298 (checks if the module and the motors work).
