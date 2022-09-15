@@ -11,9 +11,6 @@ double x;
 double y;
 double z;
 
-float outputM1_1, outputM1_2, outputM2_1, outputM2_2;
-float outputNew1_1, outputNew1_2, outputNew2_1, outputNew2_2;
-
 //Pins for motor speed control
 int motorW1pin1 = 2;
 int motorW1pin2 = 3;
@@ -44,10 +41,13 @@ float timeStep = 0.01;
 float Setpoint = 0;
 
 float outputWheel1,outputWheel2,outputBed1,outputBed2;
+float outputNew1_1, outputNew1_2, outputNew2_1, outputNew2_2;
+float outputM1_1, outputM1_2, outputM2_1, outputM2_2;
+
 
 float KpM1_1 = 1.05;
 float KdM1_1 = 0;
-float KiM1_1 = 0;
+float KiM1_1 = 0.01;
 
 float KpM1_2 = 1.05;
 float KdM1_2 = 0;
@@ -61,13 +61,13 @@ float KpM2_2 = 1.05;
 float KdM2_2 = 0;
 float KiM2_2 = 0.01;
 
-float Kp = 1.05;
-float Kd = 0;
-float Ki = 0.05;
+float Kp = -1.05;
+float Kd = -0;
+float Ki = -0.03;
 
 float Kp1 = 1.05;
 float Kd1 = 0;
-float Ki1 = 0.05 ;
+float Ki1 = 0.03 ;
 
 // variables internas del controlador
 unsigned long currentTime, previousTime;
@@ -102,10 +102,11 @@ Serial.begin(9600);
   pinMode(motorS4pin1, OUTPUT);
   pinMode(motorS4pin2, OUTPUT);
 
-  delay(2000);
+  delay(4000);
 }
 void loop(){
   timer = millis();
+  delay(10);
   Wire.beginTransmission(MPU_addr);
   Wire.write(0x3B);
   Wire.endTransmission(false);
@@ -113,7 +114,6 @@ void loop(){
   AcX=Wire.read()<<8|Wire.read();
   AcY=Wire.read()<<8|Wire.read();
   AcZ=Wire.read()<<8|Wire.read();
-  
   int xAng = map(AcX,minVal,maxVal,-90,90);
   int yAng = map(AcY,minVal,maxVal,-90,90);
   int zAng = map(AcZ,minVal,maxVal,-90,90);
@@ -121,8 +121,8 @@ void loop(){
   x= RAD_TO_DEG * (atan2(-yAng, -zAng)+PI);
   y= RAD_TO_DEG * (atan2(-xAng, -zAng)+PI);
   z= RAD_TO_DEG * (atan2(-yAng, -xAng)+PI);
-  
-  delay((timeStep*1000) - (millis() - timer));
+
+//  delay((timeStep*1000) - (millis() - timer));                        Delay añadido por modulo, no decidido
   PIDcontrol(z,x,y);
   Serial.println("-----------------------------------------");
   Serial.print("AngleX= ");
@@ -144,7 +144,7 @@ void loop(){
   Serial.print(" PID_Bed 2 = ");
   Serial.print(outputBed2);
 
-//  //Control of one side of the bed/
+  //Control of one side of the bed/
   if (outputBed1 >= 0){
     analogWrite(motorS1pin1,outputBed1);
     analogWrite(motorS1pin2,0);
@@ -173,6 +173,7 @@ void loop(){
     analogWrite(motorS4pin2,outputBed2);
     }
 
+
   //Wheel control
   if (outputWheel1 >= 0){
     analogWrite(motorW1pin1,0);
@@ -196,24 +197,26 @@ void loop(){
 }
 
 float PIDcontrol(float z, float x, float y){
-        
         currentTime = millis();                               // time
         elapsedTime = (double)(currentTime - previousTime);     // elapsedTime
         
-        // z axis control
-        if (z<=200 && z>=290) {
-          error = 240 - z;                               // determine the error between the output and the desired output
-          cumError += error * elapsedTime;                      // integral of the error
-          rateError = (error - lastError) / elapsedTime;         // derivative of the error
-          float outputM1_1 = KpM1_1*error + KiM1_1*cumError + KdM1_1*rateError;     // Calculate output of PID
-          float outputM2_1 = KpM2_1*error + KiM2_1*cumError + KdM2_1*rateError;     // Calculate output of PID
-          lastError = error; 
-          outputNew1_1 = outputM1_1;
-          outputNew2_1 = outputM2_1;
-        } else { 
-          outputNew1_1 = 0;
-          outputNew2_1 = 0;
-        }
+//        // z axis control
+//        if (z<=200 && z>=290) {
+//          error = 240 - z;                               // determine the error between the output and the desired output
+//          cumError += error * elapsedTime;                      // integral of the error
+//          rateError = (error - lastError) / elapsedTime;         // derivative of the error
+//          float outputM1_1 = KpM1_1*error + KiM1_1*cumError + KdM1_1*rateError;     // Calculate output of PID
+//          float outputM2_1 = KpM2_1*error + KiM2_1*cumError + KdM2_1*rateError;     // Calculate output of PID
+//          lastError = error; 
+//          outputNew1_1 = outputM1_1;
+//          outputNew2_1 = outputM2_1;
+//        } else { 
+//          outputNew1_1 = 0;
+//          outputNew2_1 = 0;
+//        }
+//
+//        Serial.print(" PARTE 2= ");
+//        Serial.print(outputNew1_2);
         
         // x axis control
         if (x<=355 && x>=5) {
@@ -228,7 +231,6 @@ float PIDcontrol(float z, float x, float y){
           rateError1 = (error1 - lastError1) / elapsedTime;         // derivative of the error
           float outputM1_2 = KpM1_2*error1 + KiM1_2*cumError1 + KdM1_2*rateError1;
           float outputM2_2 = KpM2_2*error1 + KiM2_2*cumError1 + KdM2_2*rateError1;
-          lastError1 = error1;
           if (error1<0){
             outputNew1_2 = -outputM1_2;
             outputNew2_2 = -outputM2_2;
@@ -241,10 +243,12 @@ float PIDcontrol(float z, float x, float y){
           outputNew2_2 = 0;
         }
 
-        outputWheel1 = outputM1_1 + outputNew1_2;
-        outputWheel2 = outputM2_1 + outputNew2_2;
+        outputWheel1 = outputNew1_1 + outputNew1_2;
+        outputWheel2 = outputNew2_1 + outputNew2_2;
 
-        // y axis control
+        Serial.print("  ");
+        Serial.print(outputNew1_2);
+
         if(y>=2 && y <= 358){
           if (y<=80) {
           error2 = 0 - y;                               // determine the error between the output and the desired output
@@ -272,8 +276,8 @@ float PIDcontrol(float z, float x, float y){
           outputBed2 = 0;
           outputBed1 = 0;
           }
-                               
-        lastError1 = error1;   // store last error
+
+        lastError1 = error1;
         previousTime = currentTime;
 
         if (outputWheel1>=255) {
@@ -281,6 +285,7 @@ float PIDcontrol(float z, float x, float y){
         } else if (outputWheel1<=-255) {
           outputWheel1 = -255;
           }
+          
         if (outputWheel2>=255) {
           outputWheel2 = 255;
         }  else if (outputWheel2<=-255) {
@@ -298,9 +303,9 @@ float PIDcontrol(float z, float x, float y){
         }  else if (outputBed2<=-255) {
           outputBed2 = -255;
           }
-          
         outputWheel1= int(outputWheel1);
         outputWheel2= int(outputWheel2);
+
         outputBed1= int(outputBed1);
         outputBed2= int(outputBed2);
         
